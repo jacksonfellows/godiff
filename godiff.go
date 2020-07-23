@@ -38,27 +38,15 @@ func max(x, y int) int {
 
 func lcs(x []string, y []string) []int {
 	tbl := make([]int, (len(x)+1)*(len(y)+1))
-
-	var _lcs func(i, j int) int
-	_lcs = func(i, j int) int {
-		if i == 0 || j == 0 {
-			return 0
+	for i := 1; i <= len(x); i++ {
+		for j := 1; j <= len(y); j++ {
+			if x[i-1] == y[j-1] {
+				tbl[j*len(x)+i] = tbl[(j-1)*len(x)+i-1] + 1
+			} else {
+				tbl[j*len(x)+i] = max(tbl[(j-1)*len(x)+i], tbl[j*len(x)+i-1])
+			}
 		}
-		s := tbl[j*len(x)+i]
-		if s != 0 {
-			return s
-		}
-
-		if x[i-1] == y[j-1] {
-			s = _lcs(i-1, j-1) + 1
-		} else {
-			s = max(_lcs(i, j-1), _lcs(i-1, j))
-		}
-		tbl[j*len(x)+i] = s
-		return s
-
 	}
-	_lcs(len(x), len(y))
 	return tbl
 }
 
