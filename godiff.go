@@ -50,22 +50,66 @@ func lcs(x []string, y []string) []int {
 	return tbl
 }
 
+var status = 0
+
+func printRange(prefix string, start, d int, lines []string) {
+	status = 1
+	for i := 0; i < d; i++ {
+		fmt.Printf("%s%s\n", prefix, lines[start+i])
+	}
+}
+
+func printCmd(c string, i0, i1, j0, j1 int) {
+	switch {
+	case i0 == i1 && j0 == j1:
+		fmt.Printf("%d%s%d\n", i0, c, j0)
+	case i0 == i1:
+		fmt.Printf("%d%s%d,%d\n", i0, c, j0, j1)
+	case j0 == j1:
+		fmt.Printf("%d,%d%s%d\n", i0, i1, c, j0)
+	default:
+		fmt.Printf("%d,%d%s%d,%d\n", i0, i1, c, j0, j1)
+	}
+}
+
 func printDiff(tbl []int, x []string, y []string) {
-	var _printDiff func(i, j int)
-	_printDiff = func(i, j int) {
+	printChange := func(i, j, di, dj int) {
 		switch {
-		case i > 0 && j > 0 && x[i-1] == y[j-1]:
-			_printDiff(i-1, j-1)
-			fmt.Println(" ", x[i-1])
-		case j > 0 && (i == 0 || tbl[(j-1)*len(x)+i] >= tbl[j*len(x)+i-1]):
-			_printDiff(i, j-1)
-			fmt.Println("+", y[j-1])
-		case i > 0 && (j == 0 || tbl[(j-1)*len(x)+i] < tbl[j*len(x)+i-1]):
-			_printDiff(i-1, j)
-			fmt.Println("-", x[i-1])
+		case di == 0 && dj == 0:
+		case di == 0:
+			printCmd("a", i, i, j+1, j+dj)
+			printRange("> ", j, dj, y)
+		case dj == 0:
+			printCmd("d", i+1, i+di, j, j)
+			printRange("< ", i, di, x)
+		default:
+			printCmd("c", i+1, i+di, j+1, j+dj)
+			printRange("< ", i, di, x)
+			fmt.Println("---")
+			printRange("> ", j, dj, y)
 		}
 	}
-	_printDiff(len(x), len(y))
+
+	i, j := len(x), len(y)
+	var di, dj int
+	for {
+		switch {
+		case i > 0 && j > 0 && x[i-1] == y[j-1]:
+			defer printChange(i, j, di, dj)
+			di, dj = 0, 0
+			i--
+			j--
+		case j > 0 && (i == 0 || tbl[(j-1)*len(x)+i] > tbl[j*len(x)+i-1]):
+			dj++
+			j--
+		case i > 0 && (j == 0 || tbl[(j-1)*len(x)+i] <= tbl[j*len(x)+i-1]):
+			di++
+			i--
+		default:
+			printChange(i, j, di, dj)
+			return
+		}
+	}
 }
 
 func main() {
@@ -76,4 +120,5 @@ func main() {
 	y := readLines(os.Args[2])
 	tbl := lcs(x, y)
 	printDiff(tbl, x, y)
+	os.Exit(status)
 }
